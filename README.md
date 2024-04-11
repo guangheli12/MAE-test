@@ -24,3 +24,17 @@ pip install timm==0.4.12
 # tensorboard 中下面这个会报错，直接删掉 
 LooseVersion = distutils.version.LooseVersion
 ```
+
+
+### 运行指令 & 说明 
+
+
+#### MAE baseline 说明 
+
+finetune: 
+```python
+# 运行指令：
+python main_finetune.py --finetune 模型路径 
+```
+
+  

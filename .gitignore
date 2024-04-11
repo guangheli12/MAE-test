@@ -1,3 +1,5 @@
 logs/
 data/
 output_dir
+finetune_logs/
+finetuned_weights/

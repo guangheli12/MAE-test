@@ -12,25 +12,29 @@ import os
 import PIL
 
 from torchvision import datasets, transforms
-
+import torchvision 
 from timm.data import create_transform
-from timm.data.constants import IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD
+# from timm.data.constants import IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD
 
 
 def build_dataset(is_train, args):
     transform = build_transform(is_train, args)
 
-    root = os.path.join(args.data_path, 'train' if is_train else 'val')
-    dataset = datasets.ImageFolder(root, transform=transform)
+    dataset = torchvision.datasets.CIFAR10(
+        root = args.data_path, 
+        train = is_train, 
+        transform = transform
+    )
 
     print(dataset)
 
     return dataset
 
-
+# (0.4914, 0.4822, 0.4465)
+# (0.2023, 0.1994, 0.2010)
 def build_transform(is_train, args):
-    mean = IMAGENET_DEFAULT_MEAN
-    std = IMAGENET_DEFAULT_STD
+    mean = (0.4914, 0.4822, 0.4465)
+    std  = (0.2023, 0.1994, 0.2010)
     # train transform
     if is_train:
         # this should always dispatch to transforms_imagenet_train
@@ -50,10 +54,10 @@ def build_transform(is_train, args):
 
     # eval transform
     t = []
-    if args.input_size <= 224:
-        crop_pct = 224 / 256
-    else:
-        crop_pct = 1.0
+    # if args.input_size <= 224:
+        # crop_pct = 224 / 256
+    # else:
+    crop_pct = 1.0
     size = int(args.input_size / crop_pct)
     t.append(
         transforms.Resize(size, interpolation=PIL.Image.BICUBIC),  # to maintain same ratio w.r.t. 224 images
