@@ -27,7 +27,7 @@ class MaskedAutoencoderViT(nn.Module):
                  decoder_embed_dim=512, decoder_depth=8, decoder_num_heads=16,
                  mlp_ratio=4., norm_layer=nn.LayerNorm, norm_pix_loss=False):
         super().__init__()
-
+        
         # --------------------------------------------------------------------------
         # MAE encoder specifics
         self.patch_embed = PatchEmbed(img_size, patch_size, in_chans, embed_dim)
@@ -55,6 +55,11 @@ class MaskedAutoencoderViT(nn.Module):
             for i in range(decoder_depth)])
 
         self.decoder_norm = norm_layer(decoder_embed_dim)
+
+        # 记录一下常见参数 
+        self.embed_dim = embed_dim 
+        self.decoder_embed_dim = decoder_embed_dim 
+
         self.decoder_pred = nn.Linear(decoder_embed_dim, patch_size**2 * in_chans, bias=True) # decoder to patch
         # --------------------------------------------------------------------------
 
@@ -195,13 +200,17 @@ class MaskedAutoencoderViT(nn.Module):
 
         return x
 
-    def forward_loss(self, imgs, pred, mask):
+    def forward_loss(self, imgs, pred, mask, reconstruct_target):
         """
         imgs: [N, 3, H, W]
         pred: [N, L, p*p*3]
         mask: [N, L], 0 is keep, 1 is remove, 
         """
-        target = self.patchify(imgs)
+        if reconstruct_target is None: 
+            target = self.patchify(imgs)
+        else: 
+            target = reconstruct_target 
+            
         if self.norm_pix_loss:
             mean = target.mean(dim=-1, keepdim=True)
             var = target.var(dim=-1, keepdim=True)
@@ -213,13 +222,50 @@ class MaskedAutoencoderViT(nn.Module):
         loss = (loss * mask).sum() / mask.sum()  # mean loss on removed patches
         return loss
 
-    def forward(self, imgs, mask_ratio=0.75):
+    def forward(self, imgs, mask_ratio=0.75, reconstruct_target = None):
         latent, mask, ids_restore = self.forward_encoder(imgs, mask_ratio)
         pred = self.forward_decoder(latent, ids_restore)  # [N, L, p*p*3]
-        loss = self.forward_loss(imgs, pred, mask)
+        loss = self.forward_loss(imgs, pred, mask, reconstruct_target) 
         return loss, pred, mask
 
 
+class BootstrapMAEVit(MaskedAutoencoderViT): 
+    def __init__(self, img_size=224, patch_size=16, in_chans=3,
+                embed_dim=1024, depth=24, num_heads=16,
+                decoder_embed_dim=512, decoder_depth=8, decoder_num_heads=16,
+                mlp_ratio=4., norm_layer=nn.LayerNorm, norm_pix_loss=False):
+        super().__init__(
+            img_size = img_size, patch_size = patch_size, in_chans = in_chans, 
+            embed_dim = embed_dim, depth = depth, num_heads = num_heads,
+            decoder_embed_dim = decoder_embed_dim, decoder_depth = decoder_depth, decoder_num_heads = decoder_num_heads,
+            mlp_ratio = mlp_ratio, norm_layer = norm_layer, norm_pix_loss = norm_pix_loss
+        )
+
+    # 重写这个，去掉 class_emd(肯定不需要喽)
+    def forward_encoder_target(self, x):
+        # embed patches
+        x = self.patch_embed(x)
+
+        # add pos embed w/o cls token
+        x = x + self.pos_embed[:, 1:, :]
+
+        # no masking needed 
+        # masking: length -> length * mask_ratio
+        # x, mask, ids_restore = self.random_masking(x, mask_ratio)
+
+        # append cls token
+        cls_token = self.cls_token + self.pos_embed[:, :1, :]
+        cls_tokens = cls_token.expand(x.shape[0], -1, -1)
+        x = torch.cat((cls_tokens, x), dim=1)
+
+        # apply Transformer blocks
+        for blk in self.blocks:
+            x = blk(x)
+        x = self.norm(x)
+        
+        # x.shape = (batch_size, 65, 192)
+        return x[: , 1 : , :] 
+        
 def mae_vit_base_patch16_dec512d8b(**kwargs):
     model = MaskedAutoencoderViT(
         patch_size=16, embed_dim=768, depth=12, num_heads=12,
@@ -250,8 +296,15 @@ def mae_deit_tiny_patch_4(**kwargs):
         mlp_ratio = 4, norm_layer=partial(nn.LayerNorm, eps=1e-6), **kwargs)
     return model 
 
+def mae_deit_tiny_patch_4_target(**kwargs): 
+    model = BootstrapMAEVit(
+        img_size = 32, patch_size = 4, embed_dim = 192, depth = 12, num_heads = 3, 
+        decoder_embed_dim=512, decoder_depth=8, decoder_num_heads=16,
+        mlp_ratio = 4, norm_layer=partial(nn.LayerNorm, eps=1e-6), **kwargs)
+    return model 
 # set recommended archs
 # mae_vit_base_patch16 = mae_vit_base_patch16_dec512d8b  # decoder: 512 dim, 8 blocks
 # mae_vit_large_patch16 = mae_vit_large_patch16_dec512d8b  # decoder: 512 dim, 8 blocks
 # mae_vit_huge_patch14 = mae_vit_huge_patch14_dec512d8b  # decoder: 512 dim, 8 blocks
 mae_deit_tiny = mae_deit_tiny_patch_4 
+mae_deit_tiny_target = mae_deit_tiny_patch_4_target 

@@ -23,7 +23,7 @@ def train_one_epoch(model: torch.nn.Module,
                     device: torch.device, epoch: int, loss_scaler,
                     log_writer=None,
                     args=None, 
-                    target_model = None
+                    model_target = None
     ):
     model.train(True)
     metric_logger = misc.MetricLogger(delimiter="  ")
@@ -46,15 +46,20 @@ def train_one_epoch(model: torch.nn.Module,
 
         samples = samples.to(device, non_blocking=True)
 
-        # 还没有到 EMA warmup step, 所以还是重建像素
-        if target_model is None:    
-            with torch.cuda.amp.autocast():
-                loss, _, _ = model(samples, mask_ratio=args.mask_ratio)
+        reconstruct_target = None 
+        if model_target is not None:    
 
-            loss_value = loss.item()
-        else: 
-            # 到了 EMA warmup step 了，所以要重建 encoder 的 latent 了 
-            sys.exit(0) 
+            # 已经过了 warmup, 可以对 encoder 输出进行重建了 
+            with torch.no_grad(): 
+                reconstruct_target = model_target.forward_encoder_target(samples) 
+            reconstruct_target.to(device)   
+
+
+        # print("WA!") 
+
+        with torch.cuda.amp.autocast():
+            loss, _, _ = model(samples, mask_ratio=args.mask_ratio, reconstruct_target = reconstruct_target)
+        loss_value = loss.item()
 
         if not math.isfinite(loss_value):
             print("Loss is {}, stopping training".format(loss_value))

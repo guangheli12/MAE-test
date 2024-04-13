@@ -33,6 +33,7 @@ from util.misc import NativeScalerWithGradNormCount as NativeScaler
 
 import models_mae
 
+
 from engine_pretrain_bootstrap import train_one_epoch
 
 
@@ -45,9 +46,11 @@ def get_args_parser():
     parser.add_argument('--epochs', default=200, type=int)
     parser.add_argument('--accum_iter', default=1, type=int,
                         help='Accumulate gradient iterations (for increasing the effective batch size under memory constraints)')
-    # Model parameters
+    # Model parameters (original)
     parser.add_argument('--model', default='mae_deit_tiny', type=str, metavar='MODEL',
                         help='Name of model to train')
+    # Name of target model 
+    parser.add_argument('--target_model', default = 'mae_deit_tiny_target', type = str)  
 
     # CIFAR10 has size of 32 
     parser.add_argument('--input_size', default=32, type=int,
@@ -161,8 +164,6 @@ def main(args):
     model = models_mae.__dict__[args.model](norm_pix_loss=args.norm_pix_loss)
     model.to(device)
 
-    model_target = models_mae.__dict__[args.model](norm_pix_loss=args.norm_pix_loss)  
-    model_target.to(device) 
 
     model_without_ddp = model
     print("Model = %s" % str(model_without_ddp))
@@ -193,23 +194,46 @@ def main(args):
     print(f"Start training for {args.epochs} epochs")
     start_time = time.time()
 
-    
+    model_target = None 
     for epoch in tqdm(range(args.start_epoch, args.epochs)):
         if args.distributed:
             data_loader_train.sampler.set_epoch(epoch)
+        
+        # 到了启动 ema-target 的时候了，第一次载入 target-encoder 
+        if epoch == args.warmup_target_epochs: 
+            model_target = models_mae.__dict__[args.target_model](norm_pix_loss=args.norm_pix_loss)  
+            model_target.to(device) 
+
+            # 此时 model_target 的输出就是 (512, 64, 192), 所以说需要改一下 model 的网络架构了 
+            # 这两行可以保证 model_target 的结构和 model 一模一样了
+            model.decoder_pred = torch.nn.Linear(model.decoder_embed_dim, model.embed_dim, bias = True).to(device)
+            model_target.decoder_pred = torch.nn.Linear(model.decoder_embed_dim, model.embed_dim, bias = True).to(device)     
+
+            # 下面将 model 的参数加载给 model_target 
+            # 做完这个后 model_target 和 model 不仅网络架构一样，而且参数还一样了 
+            # 后面会逐渐对 model-target 进行 EMA 更新 
+            model_target.load_state_dict(model.state_dict()) 
+
         train_stats = train_one_epoch(
             model, data_loader_train,
             optimizer, device, epoch, loss_scaler,
             log_writer=log_writer,
-            args=args
+            args=args, 
+            model_target = model_target
         )
         if args.output_dir and (epoch % 20 == 0 or epoch + 1 == args.epochs):
             misc.save_model(
                 args=args, model=model, model_without_ddp=model_without_ddp, optimizer=optimizer,
                 loss_scaler=loss_scaler, epoch=epoch)
+
+        # 如果当前已经有 target_model 了，那么就对 target_model 做指数平滑更新
+        # 逐步更新 
+        # old-weight * 0.995 + new-weight * 0.005 
+        if model_target is not None: 
+            for param_target, param in zip(model_target.parameters(), model.parameters()):
+                param_target.data.copy_(param_target.data * (1.0 - args.tau) + param.data * args.tau)
             
-        # 一个 epoch 结束了，可以更新 target 了 
-        
+
 
         log_stats = {**{f'train_{k}': v for k, v in train_stats.items()},
                         'epoch': epoch,}
