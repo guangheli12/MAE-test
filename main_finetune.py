@@ -51,6 +51,8 @@ def get_args_parser():
 
     # Model parameters
     # 从这里加载一个带有分类头的模型
+
+    # bootstrap_dir
     parser.add_argument('--model', default='mae_deit_tiny_patch_4', type=str, metavar='MODEL',
                         help='Name of model to train')
 
@@ -113,7 +115,7 @@ def get_args_parser():
 
     # * Finetuning params
     # 这里需要加上 finetune 的模型路径
-    parser.add_argument('--finetune', default='./output_dir/checkpoint-199.pth',
+    parser.add_argument('--finetune', default='./bootstrap_dir/checkpoint-199.pth',
                         help='finetune from checkpoint')
     parser.add_argument('--global_pool', action='store_true')
     parser.set_defaults(global_pool=True)
@@ -130,9 +132,9 @@ def get_args_parser():
     # finetune output_dir = finetuned_weights
     # tensorboard dir     = finetune_logs 
     # current device = cuda:0 
-    parser.add_argument('--output_dir', default='./finetuned_weights',
+    parser.add_argument('--output_dir', default='./bootstrap_finetuned_weights',
                         help='path where to save, empty for no saving')
-    parser.add_argument('--log_dir', default='./finetune_logs',
+    parser.add_argument('--log_dir', default='./bootstrap_finetune_logs',
                         help='path where to tensorboard log')
     parser.add_argument('--device', default='cuda:0',
                         help='device to use for training / testing')

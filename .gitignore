@@ -5,3 +5,5 @@ finetune_logs/
 finetuned_weights/
 bootstrap_logs/
 bootstrap_dir/
+bootstrap_finetune_logs/
+bootstrap_finetuned_weights/
