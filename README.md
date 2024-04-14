@@ -44,4 +44,10 @@ pretrain:
 tensorboard --logdir=bootstrap_logs
 python ema_bootstrap_pretrain.py --warmup_target_epochs=10 
 ```
-  
+
+#### K-MAE 说明 
+pretrain: 
+```python
+tensorboard --logdir=k_logs
+python k_bootstrap_pretrain.py --num_k=1 
+```

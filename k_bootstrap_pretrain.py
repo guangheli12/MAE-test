@@ -66,12 +66,7 @@ def get_args_parser():
     # Optimizer parameters
     parser.add_argument('--weight_decay', type=float, default=0.05,
                         help='weight decay (default: 0.05)')  
-    
-    # 这个是 EMA 的系数，即 new_weight * tau + old_weight * (1 - tau) 
-    parser.add_argument('--tau', type = float, default = 0.005)
-
-    # 这个是进行 EMA 时候的 warmup 
-    parser.add_argument('--warmup_target_epochs', type = int, default = 1) 
+     
 
     parser.add_argument('--lr', type=float, default=None, metavar='LR',
                         help='learning rate (absolute lr)')
@@ -89,7 +84,11 @@ def get_args_parser():
     
     # tensorboard logouts here 
     parser.add_argument('--log_dir', default='./k_logs',
-                        help='path where to tensorboard log')
+                        help='path where to tensorboard log') 
+    
+    # 每个模型 train num_k 次（交替） 
+    parser.add_argument('--num_k', default=1, type=int)    
+
     parser.add_argument('--device', default='cuda',
                         help='device to use for training / testing')
     parser.add_argument('--seed', default=0, type=int)
@@ -199,7 +198,7 @@ def main(args):
             data_loader_train.sampler.set_epoch(epoch)
         
         # 到了启动 ema-target 的时候了，第一次载入 target-encoder 
-        if epoch == args.warmup_target_epochs: 
+        if epoch == args.num_k:  
             model_target = models_mae.__dict__[args.target_model](norm_pix_loss=args.norm_pix_loss)  
             model_target.to(device) 
 
@@ -225,15 +224,12 @@ def main(args):
                 args=args, model=model, model_without_ddp=model_without_ddp, optimizer=optimizer,
                 loss_scaler=loss_scaler, epoch=epoch)
 
-        # 如果当前已经有 target_model 了，那么就对 target_model 做指数平滑更新
-        # 逐步更新 
-        # old-weight * 0.995 + new-weight * 0.005 
+
+        # 每隔 k 次比 EMA 方便：直接复制参数就可以了
+
         if model_target is not None: 
-            for param_target, param in zip(model_target.parameters(), model.parameters()):
-                param_target.data.copy_(param_target.data * (1.0 - args.tau) + param.data * args.tau)
+            model_target.load_state_dict(model.state_dict()) 
             
-
-
         log_stats = {**{f'train_{k}': v for k, v in train_stats.items()},
                         'epoch': epoch,}
 
@@ -251,11 +247,8 @@ def main(args):
 if __name__ == '__main__':
     args = get_args_parser()
     args = args.parse_args()
-    # 加上 warmup_epochs 和 tau 
-    args.output_dir = os.path.join(
-        args.output_dir, 
-        str(args.warmup_target_epochs) + '_' + str(args.tau)
-    )
+    # 加上 num_k，即每隔 k 次交换一下 target 
+    args.output_dir = os.path.join(args.output_dir, str(args.num_k))
     if args.output_dir:
         Path(args.output_dir).mkdir(parents=True, exist_ok=True)
     main(args)
