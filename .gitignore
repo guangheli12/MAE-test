@@ -8,3 +8,5 @@ bootstrap_dir/
 bootstrap_finetune_logs/
 bootstrap_finetuned_weights/
 bootstrap_pretrain_weights/
+k_pretrain_weights/
+k_logs/
