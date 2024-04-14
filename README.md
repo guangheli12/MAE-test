@@ -37,4 +37,11 @@ finetune:
 python main_finetune.py --finetune 模型路径 
 ```
 
+
+#### EMA-MAE 说明 
+pretrain:
+```python 
+tensorboard --logdir=bootstrap_logs
+python ema_bootstrap_pretrain.py --warmup_target_epochs=10 
+```
   

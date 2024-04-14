@@ -254,7 +254,7 @@ if __name__ == '__main__':
     # 加上 warmup_epochs 和 tau 
     args.output_dir = os.path.join(
         args.output_dir, 
-        args.warmup_target_epochs + '_' + args.tau 
+        str(args.warmup_target_epochs) + '_' + str(args.tau)
     )
     if args.output_dir:
         Path(args.output_dir).mkdir(parents=True, exist_ok=True)
