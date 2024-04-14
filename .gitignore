@@ -7,3 +7,4 @@ bootstrap_logs/
 bootstrap_dir/
 bootstrap_finetune_logs/
 bootstrap_finetuned_weights/
+bootstrap_pretrain_weights/
