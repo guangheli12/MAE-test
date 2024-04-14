@@ -115,7 +115,7 @@ def get_args_parser():
 
     # * Finetuning params
     # 这里需要加上 finetune 的模型路径
-    parser.add_argument('--finetune', default='./bootstrap_dir/checkpoint-199.pth',
+    parser.add_argument('--finetune', default=None,
                         help='finetune from checkpoint')
     parser.add_argument('--global_pool', action='store_true')
     parser.set_defaults(global_pool=True)
@@ -326,10 +326,10 @@ def main(args):
             log_writer=log_writer,
             args=args
         )
-        if args.output_dir and (epoch + 1) % 20 == 0:
-            misc.save_model(
-                args=args, model=model, model_without_ddp=model_without_ddp, optimizer=optimizer,
-                loss_scaler=loss_scaler, epoch=epoch)
+        # if args.output_dir and (epoch + 1) % 20 == 0:
+            # misc.save_model(
+                # args=args, model=model, model_without_ddp=model_without_ddp, optimizer=optimizer,
+                # loss_scaler=loss_scaler, epoch=epoch)
 
         test_stats = evaluate(data_loader_val, model, device)
         print(f"Accuracy of the network on the {len(dataset_val)} test images: {test_stats['acc1']:.1f}%")
