@@ -83,9 +83,8 @@ def get_args_parser():
     parser.add_argument('--warmup_epochs', type=int, default=40, metavar='N',
                         help='epochs to warmup LR')
 
-    # Dataset parameters
-
-    parser.add_argument('--output_dir', default='./bootstrap_dir',
+    # Dataset parameters       
+    parser.add_argument('--output_dir', default='./bootstrap_pretrain_weights',
                         help='path where to save, empty for no saving')
     
     # tensorboard logouts here 
@@ -252,6 +251,11 @@ def main(args):
 if __name__ == '__main__':
     args = get_args_parser()
     args = args.parse_args()
+    # 加上 warmup_epochs 和 tau 
+    args.output_dir = os.path.join(
+        args.output_dir, 
+        args.warmup_target_epochs + '_' + args.tau 
+    )
     if args.output_dir:
         Path(args.output_dir).mkdir(parents=True, exist_ok=True)
     main(args)
