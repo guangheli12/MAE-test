@@ -131,7 +131,11 @@ def get_args_parser():
 
     # finetune output_dir = finetuned_weights
     # tensorboard dir     = finetune_logs 
-    # current device = cuda:0 
+    # current device = cuda:0  
+
+    # add meta(additional) info here. 
+    # 
+    parser.add_argument('--additional_info', default = '', type = str) 
     parser.add_argument('--output_dir', default='./bootstrap_finetuned_weights',
                         help='path where to save, empty for no saving')
     parser.add_argument('--log_dir', default='./bootstrap_finetune_logs',
@@ -360,6 +364,8 @@ def main(args):
 if __name__ == '__main__':
     args = get_args_parser()
     args = args.parse_args()
+    args.output_dir = os.path.join(args.output_dir, args.addition_info)
+    args.log_dir    = os.path.join(args.log_dir, args.addition_info) 
     if args.output_dir:
         Path(args.output_dir).mkdir(parents=True, exist_ok=True)
     main(args)

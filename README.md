@@ -41,8 +41,14 @@ python main_finetune.py --finetune 模型路径
 #### EMA-MAE 说明 
 pretrain:
 ```python 
-tensorboard --logdir=bootstrap_logs
+tensorboard --logdir=bootstrap_logs/
 python ema_bootstrap_pretrain.py --warmup_target_epochs=10 
+```
+
+finetune: 
+```python 
+# Example: 
+python main_finetune.py --finetune=bootstrap_pretrain_weights/80_0.005/checkpoint-199.pth --output_dir=bootstrap_finetuned_weights --log_dir=bootstrap_finetune_logs --device=cuda:0 --addition_info=80_0.005
 ```
 
 #### K-MAE 说明 
