@@ -256,6 +256,10 @@ if __name__ == '__main__':
         args.output_dir, 
         str(args.warmup_target_epochs) + '_' + str(args.tau)
     )
+    args.log_dir = os.path.join(
+        args.log_dir, 
+        str(args.warmup_target_epochs) + '_' + str(args.tau)
+    )
     if args.output_dir:
         Path(args.output_dir).mkdir(parents=True, exist_ok=True)
     main(args)
