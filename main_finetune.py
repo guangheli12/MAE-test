@@ -364,8 +364,8 @@ def main(args):
 if __name__ == '__main__':
     args = get_args_parser()
     args = args.parse_args()
-    args.output_dir = os.path.join(args.output_dir, args.addition_info)
-    args.log_dir    = os.path.join(args.log_dir, args.addition_info) 
+    args.output_dir = os.path.join(args.output_dir, args.additional_info)
+    args.log_dir    = os.path.join(args.log_dir, args.additional_info) 
     if args.output_dir:
         Path(args.output_dir).mkdir(parents=True, exist_ok=True)
     main(args)
