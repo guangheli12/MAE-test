@@ -193,6 +193,7 @@ def main(args):
     start_time = time.time()
 
     model_target = None 
+
     for epoch in tqdm(range(args.start_epoch, args.epochs)):
         if args.distributed:
             data_loader_train.sampler.set_epoch(epoch)
@@ -212,6 +213,9 @@ def main(args):
             # 后面会逐渐对 model-target 进行 EMA 更新 
             model_target.load_state_dict(model.state_dict()) 
 
+        if model_target is not None and epoch % args.num_k == 0: 
+            model_target.load_state_dict(model.state_dict())    
+            
         train_stats = train_one_epoch(
             model, data_loader_train,
             optimizer, device, epoch, loss_scaler,
@@ -227,8 +231,8 @@ def main(args):
 
         # 每隔 k 次比 EMA 方便：直接复制参数就可以了
 
-        if model_target is not None: 
-            model_target.load_state_dict(model.state_dict()) 
+        # if model_target is not None and epoch % args.num_k == 0: 
+        #     model_target.load_state_dict(model.state_dict()) 
             
         log_stats = {**{f'train_{k}': v for k, v in train_stats.items()},
                         'epoch': epoch,}
@@ -249,6 +253,7 @@ if __name__ == '__main__':
     args = args.parse_args()
     # 加上 num_k，即每隔 k 次交换一下 target 
     args.output_dir = os.path.join(args.output_dir, str(args.num_k))
+    args.log_dir    = os.path.join(args.log_dir,    str(args.num_k)) 
     if args.output_dir:
         Path(args.output_dir).mkdir(parents=True, exist_ok=True)
     main(args)
