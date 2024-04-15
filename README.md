@@ -51,3 +51,13 @@ pretrain:
 tensorboard --logdir=k_logs
 python k_bootstrap_pretrain.py --num_k=1 
 ```
+
+
+
+
+
+
+### sketch board
+```python 
+python main_finetune.py --finetune=bootstrap_pretrain_weights/10_0.005/checkpoint-199.pth --output_dir=bootstrap_finetuned_weights/10_0.005
+```
