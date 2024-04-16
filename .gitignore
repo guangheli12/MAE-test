@@ -12,3 +12,7 @@ k_pretrain_weights/
 k_logs/
 k_finetune_logs/
 k_finetuned_weights/    
+k_linear_logs/
+k_linear_weights/
+bootstrap_linear_logs/
+bootstrap_linear_weights/

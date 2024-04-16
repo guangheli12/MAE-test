@@ -51,6 +51,11 @@ finetune:
 python main_finetune.py --finetune=bootstrap_pretrain_weights/80_0.005/checkpoint-199.pth --output_dir=bootstrap_finetuned_weights --log_dir=bootstrap_finetune_logs --additional_info=80_0.005 --device=cuda:0
 ```
 
+linear: 
+```python
+python main_linprobe.py --finetune=bootstrap_pretrain_weights/80_0.005/checkpoint-199.pth --output_dir=bootstrap_linear_weights --log_dir=bootstrap_linear_logs --additional_info=80_0.005 --device=cuda:0
+```
+
 #### K-MAE 说明 
 pretrain: 
 ```python
@@ -58,6 +63,10 @@ tensorboard --logdir=k_logs
 python k_bootstrap_pretrain.py --num_k=1 
 ```
 
+linear: 
+```python
+python main_linprobe.py --finetune=k_pretrain_weights/1/checkpoint-199.pth --output_dir=k_linear_weights --log_dir=k_linear_logs --additional_info=1 --device=cuda:0
+```
 
 
 
