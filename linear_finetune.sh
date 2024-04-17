@@ -2,7 +2,8 @@
 
 # 一个大概不到 30 分钟 
 
-python main_linprobe.py --output_dir=no_pretrain_linear_weights --log_dir=no_pretrain_linear_logs --device=cuda:1
+
+python main_linprobe.py --finetune=baseline_pretrain_weights/checkpoint-199.pth --log_dir=baseline_linear_logs --device=cuda:1
 
 # python main_linprobe.py --finetune=bootstrap_pretrain_weights/1_0.005/checkpoint-199.pth --output_dir=bootstrap_finetuned_weights --log_dir=bootstrap_finetune_logs --additional_info=1_0.005 --device=cuda:0
 # python main_linprobe.py --finetune=bootstrap_pretrain_weights/5_0.005/checkpoint-199.pth --output_dir=bootstrap_finetuned_weights --log_dir=bootstrap_finetune_logs --additional_info=5_0.005 --device=cuda:0

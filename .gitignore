@@ -21,3 +21,4 @@ baseline_pretrain_weights/
 bootstrap_linear/
 no_pretrain_linear_logs/
 no_pretrain_linear_weights/
+baseline_linear_logs/
