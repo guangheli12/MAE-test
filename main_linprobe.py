@@ -1,3 +1,4 @@
+
 # Copyright (c) Meta Platforms, Inc. and affiliates.
 # All rights reserved.
 
@@ -22,7 +23,7 @@ import torch.backends.cudnn as cudnn
 from torch.utils.tensorboard import SummaryWriter
 import torchvision.transforms as transforms
 import torchvision.datasets as datasets
-
+import torchvision 
 import timm
 
 # assert timm.__version__ == "0.3.2" # version check
@@ -34,6 +35,7 @@ from util.misc import NativeScalerWithGradNormCount as NativeScaler
 from util.lars import LARS
 from util.crop import RandomResizedCrop
 
+from tqdm import tqdm 
 import models_vit
 
 from engine_finetune import train_one_epoch, evaluate
@@ -142,9 +144,17 @@ def main(args):
             transforms.Resize(32, interpolation=3),
             transforms.CenterCrop(32),
             transforms.ToTensor(),
-            transforms.Normalize(mean=[0.4914, 0.4822, 0.4465], std=[0.2023, 0.1994, 0.2010])])
-    dataset_train = datasets.ImageFolder(os.path.join(args.data_path, 'train'), transform=transform_train)
-    dataset_val = datasets.ImageFolder(os.path.join(args.data_path, 'val'), transform=transform_val)
+            transforms.Normalize(mean=[0.4914, 0.4822, 0.4465], std=[0.2023, 0.1994, 0.2010])])   
+    
+
+    dataset_train = torchvision.datasets.CIFAR10(
+        root = args.data_path, train = True, transform = transform_train
+    )
+    dataset_val = torchvision.datasets.CIFAR10(
+        root = args.data_path, train = False, transform = transform_val
+    )
+
+
     print(dataset_train)
     print(dataset_val)
 
@@ -252,7 +262,7 @@ def main(args):
     print(f"Start training for {args.epochs} epochs")
     start_time = time.time()
     max_accuracy = 0.0
-    for epoch in range(args.start_epoch, args.epochs):
+    for epoch in tqdm(range(args.start_epoch, args.epochs)):
         if args.distributed:
             data_loader_train.sampler.set_epoch(epoch)
         train_stats = train_one_epoch(
@@ -296,8 +306,9 @@ def main(args):
 if __name__ == '__main__':
     args = get_args_parser()
     args = args.parse_args()
-    args.output_dir = os.path.join(args.output_dir, args.additional_info)
-    args.log_dir    = os.path.join(args.log_dir, args.additional_info) 
+    if args.output_dir and args.additional_info:
+        args.output_dir = os.path.join(args.output_dir, args.additional_info)
+        args.log_dir    = os.path.join(args.log_dir, args.additional_info) 
     if args.output_dir:
         Path(args.output_dir).mkdir(parents=True, exist_ok=True)
     main(args)

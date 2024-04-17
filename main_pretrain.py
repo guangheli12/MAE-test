@@ -77,11 +77,11 @@ def get_args_parser():
 
     # Dataset parameters
 
-    parser.add_argument('--output_dir', default='./output_dir',
+    parser.add_argument('--output_dir', default='./baseline_pretrain_weights',
                         help='path where to save, empty for no saving')
     
     # tensorboard logouts here 
-    parser.add_argument('--log_dir', default='./logs',
+    parser.add_argument('--log_dir', default='./baseline_pretrain_logs',
                         help='path where to tensorboard log')
     parser.add_argument('--device', default='cuda',
                         help='device to use for training / testing')

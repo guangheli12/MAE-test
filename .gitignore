@@ -16,3 +16,8 @@ k_linear_logs/
 k_linear_weights/
 bootstrap_linear_logs/
 bootstrap_linear_weights/
+baseline_pretrain_logs/
+baseline_pretrain_weights/
+bootstrap_linear/
+no_pretrain_linear_logs/
+no_pretrain_linear_weights/
