@@ -1,31 +1,42 @@
-logs/
 data/
-output_dir
-finetune_logs/
-finetuned_weights/
-bootstrap_logs/
-bootstrap_dir/
-bootstrap_finetune_logs/
-bootstrap_finetuned_weights/
+baseline_pretrain_weights/
+baseline_pretrain_logs/ 
+baseline_finetune_weights/
+baseline_finetune_logs/
+baseline_linear_weights/
+baseline_linear_logs/ 
+bootstrap_pretrain_logs/
 bootstrap_pretrain_weights/
-k_pretrain_weights/
-k_logs/
-k_finetune_logs/
-k_finetuned_weights/    
-k_linear_logs/
-k_linear_weights/
 bootstrap_linear_logs/
 bootstrap_linear_weights/
-baseline_pretrain_logs/
-baseline_pretrain_weights/
-bootstrap_linear/
-no_pretrain_linear_logs/
-no_pretrain_linear_weights/
-baseline_linear_logs/
-bootstrap_pretrain_logs/
-k_pretrain_logs/
-new_finetune_logs/
-new_finetuned_weights/
-new_linear_logs/
-new_pretrain_logs/
-new_pretrain_weights/
+bootstrap_finetune_weights/
+bootstrap_finetune_logs/ 
+# output_dir
+# finetune_logs/
+# finetuned_weights/
+# bootstrap_logs/
+# bootstrap_dir/
+# bootstrap_finetune_logs/
+# bootstrap_finetuned_weights/
+# bootstrap_pretrain_weights/
+# k_pretrain_weights/
+# k_logs/
+# k_finetune_logs/
+# k_finetuned_weights/    
+# k_linear_logs/
+# k_linear_weights/
+# bootstrap_linear_logs/
+# bootstrap_linear_weights/
+# baseline_pretrain_logs/
+# baseline_pretrain_weights/
+# bootstrap_linear/
+# no_pretrain_linear_logs/
+# no_pretrain_linear_weights/
+# baseline_linear_logs/
+# bootstrap_pretrain_logs/
+# k_pretrain_logs/
+# new_finetune_logs/
+# new_finetuned_weights/
+# new_linear_logs/
+# new_pretrain_logs/
+# new_pretrain_weights/
