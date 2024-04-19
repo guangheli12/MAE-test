@@ -6,14 +6,13 @@ Guanghe Li
 
 ## Abstract
 
-
-
 In this project, we aim to improve the performance of MAE on downstream tasks(classification tasks) by changing the reconstruction target from original pixels to features extracted by a pretrained MAE encoder. The main contributions and findings are outlined as follows: 
 
-- We implement a primary version of Bootstrap MAE(MAE-K) by adjusting the target encoder every K epochs during training. Evaluation results demonstrate that MAE-K surpasses the original MAE model in performance on downstream classification task. However, the training loss exhibits significant fluctuations, potentially constraining the overall efficacy of Bootstrap MAE.
-- To address the fluctuation issue in MAE-K, we introduce an enhanced version EMA-MAE (Exponential Moving Average MAE), leveraging exponential moving average (EMA) to stabilize training. Experimental results exhibits that EMA-MAE outperforms MAE baseline and MAE-K algorithm by a large margin. 
+- We have successfully developed and implemented the MAE-K algorithm. In the MAE-K algorithm, the target encoder is updated every K epochs to align with the parameters of training MAE, and the training MAE uses the output of the target encoder as its reconstruction target. Evaluation results demonstrate that MAE-K surpasses the original MAE baseline in performance on downstream classification tasks.
+- We have also successfully implemented the EMA-MAE algorithm. In the EMA-MAE algorithm, the target encoder is updated using the exponential moving average of the training MAE. Experimental results show that EMA-MAE also outperforms the MAE baseline on downstream classification tasks. More than that, EMA-MAE achieves comparable results with MAE-K on fine-tune evaluation and outperforms MAE-K on linear evaluation. 
+- The current MAE-K algorithm and EMA-MAE algorithm exhibit instability during unsupervised pretraining, potentially impacting final performance. To address this issue, we propose a novel solution called MAE-new, which integrates MAE-K and EMA-MAE into a unified framework. MAE-new incorporates both a fast-bootstrap loss and a slow-bootstrap loss to enhance stability and robustness during the training process. 
 
-Overall experimental results are shown below: 
+Experimental results of two versions of bootstrap-MAE are shown below: 
 
 ![best-finetune](report_figures/best_finetune.png) 
 
@@ -25,9 +24,9 @@ Implementation details, experiments and further analysis are in the following se
 
 
 
-Following the requirements, the codebase is modified directly from MAE's official codebase. The running environment remains consistent with MAE's official setup, with only two minor adjustments.
+Following the requirements, the code base is modified directly from MAE's official code base. The running environment remains consistent with MAE's official setup, with only two minor adjustments.
 
-- Firstly, the version of the `timm` package in the original codebase, 0.3.2, was slightly outdated and conflicted with our PyTorch version. To resolve this, we installed `timm==0.4.12` and removed version checks from the original codebase. 
+- Firstly, the version of the `timm` package in the original code base, 0.3.2, is slightly outdated and conflicted with our PyTorch version. To resolve this, we installed `timm==0.4.12` and removed version checks from the original code base. 
 
 - Secondly, we encountered a minor issue when utilizing the SummaryWriter from TensorBoard. Thus, we did a modification in file ```lib\site-packages\torch\utils\tensorboard__init__.py``` and removed seven lines of code.  The removed codes are shown below: 
 
@@ -53,7 +52,7 @@ Following the requirements, the codebase is modified directly from MAE's officia
 
 The official MAE codebase is well-implemented, so we largely maintained the default parameters, making only a few modifications.
 
-- Number of GPUs: All experiments were conducted using a single RTX Titan GPU.
+- Number of GPUs: Most experiments were conducted using a single RTX Titan Xp GPU, a small portion of experiments were conducted on an A40 GPU. 
 - Batch size: We opted for a batch size of 512, as we observed that larger batch sizes caused burden to the CPU.
 - Training epochs: In accordance with specifications, pretraining takes 200 epochs, while finetuning takes 100 epochs.
 - Network architecture: In accordance with specifications, we employed the architecture configurations of Deit-Tiny.
@@ -65,7 +64,7 @@ The official MAE codebase is well-implemented, so we largely maintained the defa
 
 Following the parameter configurations above, we pretrain an MAE baseline model on CIFAR10 dataset for 200 epochs, and then finetune it for 100 epochs to classify images. 
 
-We compare the MAE baseline with a randomly initialized network to show that unsupervised pretraining benefits downstream classification task.
+We compare the MAE baseline with a randomly initialized network(without MAE pretraining) to show that unsupervised pretraining benefits downstream classification task.
 
 The finetune and linear evaluations are shown below: 
 
@@ -77,32 +76,58 @@ As shown above, pretraining an MAE model is able to boost downstream classificat
 
 ## 4 MAE-K 
 
+In MAE-K, we update the target network every K epochs in alignment with the parameter of the training network. As shown below, The selection of the hyperparameter K significantly impacts the final performance. 
+
+In fine-tuning evaluation, MAE-K achieves optimal result when K is set to 10, whereas during linear evaluation, the optimal performance is observed when K is set to 20. 
+
+Across fine-tuning evaluations, all versions of MAE-K outperform the MAE baseline. However, during linear evaluation, only MAE-K configurations with larger K values (4, 10, 20) surpass the baseline, while those with smaller K values (1, 2) underperform compared to the baseline algorithm. We highlight that during linear evaluation, the weights of the pre-trained encoder remain fixed and unchanged. As a result, the pre-trained encoder must be able to extract stable and convergent features for the classification head. Consequently, a larger value of K would facilitate the convergence of the trained model towards a target model, encouraging convergence and stability. Conversely, a smaller K could lead to oscillations in the reconstruction objective, hindering the convergence of the trained network.  
+
 ![k-finetune](report_figures/k_finetune.png)
 
 ![mae-k-linear](report_figures/k_linear.png)
 
+
+
 ## 5 EMA-MAE 
 
-In exponential moving average(EMA) version of MAE, the target encoder is updated every epoch equalling to the exponential moving average of trained MAE. 
+In exponential moving average(EMA) version of MAE, the target encoder is updated every epoch to equal the exponential moving average of training MAE. 
 
-In EMA-MAE, there exists two key hyperparameters: Warmup starting epochs(WSE) and Exponential moving average(ema) coefficient $\tau$. Their detailed analysis are shown below: 
+In EMA-MAE, there exists two key hyper parameters: Warmup starting epochs(WSE) and Exponential moving average(ema) coefficient $\tau$. Their detailed analysis are shown below: 
 
-**Warmup starting epochs (WSE)**: The EMA-MAE is first trained to reconstruct pixels for WSE number of epochs, which is consistent with the original training target of MAE. We refer to this stage as **warmup-stage**. Then, after the warm-up stage, the EMA-MAE is trained to bootstrap on the decoder output of exponential moving average(EMA) of trained MAE. 
+**Warmup starting epochs (WSE)**: Initially, the EMA-MAE model is trained to reconstruct pixels for WSE number of epochs, which is consistent with the original training objective of MAE. This initial phase is termed as "warmup-stage". Subsequently, following the warm-up stage, the EMA-MAE model is trained to bootstrap on the output of target encoder(exponential moving average of training EMA-MAE model) 
 
-We think it is important to find the proper value of Warmup starting epochs(WSE): The features generated by the target encoder is only valuable when the target MAE is capable of predicting masked pixels, i.e. understands the distribution of dataset. Thus, instead of performing EMA to the target encoder from the beggining, we think it is important for the target network to first learn how to recover masked pixels. The parameter study below shows that when the EMA coefficient $\tau$ is fixed, a WSE value of 5 and 20 performs best, which shows the necessity of warming up. 
-
-**Exponential moving average coefficient $\tau$**:  The target encoder is updated with the following equation: 
-$\mathrm{MAE_{target}} = \mathrm{MAE_{target}} \times \tau + \mathrm{MAE_{train}} \times (1 - \tau)$ 
-
-This equation is applied to the target encoder for every epoch after the **warmup-stage**. The idea of using EMA to update target network is very similar to the target Q-network in reinforcement learning. Following that, I chose the default value of $0.995$ as in Q-learning, for it allows the target network to gradually be updated, avoiding sudden changes. 
+Determining the appropriate value for Warmup Starting Epochs (WSE) is crucial. The features generated by the target encoder becomes valuable only when the target MAE is capable of predicting masked pixels, i.e. understands the distribution of dataset. Therefore, rather than immediately bootstrapping on target encoder's output from beginning of training, it is important for the target network to initially acquire the capability to recover masked pixels. The parameter analysis below demonstrates that, when the EMA coefficient $\tau$ remains fixed as 0.005, WSE values of 5 and 20 yield optimal performance, underscoring the necessity of the warm-up phase.
 
 ![ema_finetune](report_figures/ema_finetune.png)
 
 ![bootstrap-linear](report_figures/bootstrap_linear.png) 
 
+**Exponential moving average coefficient $\tau$**:  The target encoder is updated according to the following equation: 
+$\mathrm{MAE_{target}} = \mathrm{MAE_{target}} \times (1-\tau) + \mathrm{MAE_{train}} \times \tau$ 
+
+This equation is applied to the target encoder for each epoch after the warmup-stage. The approach of using EMA to construct a target network in this work is very similar to the utilization of target Q-network in reinforcement learning. Following that, we opt the default value of $0.005$ as in Q-learning. This choice facilitates gradual updates to the target network, thereby mitigating abrupt alterations. 
+
+We conducted additional experiments to show how the value of $\tau$ effects the final performance. As illustrated below, during finetune evaluation, $\tau$ values of $0.1$ and $0.3$ consistently outperform the performance achieved with a $\tau$ value of $0.005$. However, in linear evaluation, a $\tau$ value of $0.005$ significantly surpasses the performance of the other values. We hypothesize that a smaller value of $\tau$ results in slower updates to the target network. This in turn encourages the trained MAE encoder to provide stable and convergent features for an input image. Such convergence in features proves advantageous for linear evaluation, given that the weights of the MAE encoder remain fixed and unchanged during linear evaluation.![bootstrap-tau](report_figures/tau_bootstrap_ablation.png) 
+
+![tau-linear-ablation](report_figures/tau_bootstrap_linear_ablation.png)
 
 
-## 6 Improved version of Bootstrap-MAE 
+
+## 6 Improved version of Bootstrap-MAE
+
+As illustrated above, both MAE-K and EMA-MAE demonstrate significant improvements over the MAE-baseline. However, both versions of bootstrap MAE still encounter issues with unstable pre-training. As shown below, in the pre-training stage of MAE-K, the target encoder changes every K epochs, which causes sudden change to the reconstruction objective. In the pre-training stage of EMA-MAE, the target encoder consistently changes and the reconstruction objective is never stable, resulting in the loss function failing to converge. Thus, updating the target encoder too frequent or too infrequent would both induce instability. 
+
+![original-loss-curve](report_figures/new_mae/original_loss_curve.png)
+
+We denote the loss of bootstrapping on the target encoder of MAE-K as $L_{slow}$ and the loss of bootstrapping on the target encoder of EMA-MAE as $L_{fast}$. We believe that optimizing the combination of both losses, $L=L_{fast}+\lambda L_{slow}$, would enhance overall performance. The intuition behind this lies in the observation that solely optimizing $L_{fast}$ (EMA-encoder) leads to a smooth training curve, but the target encoder changes every epoch, which may hinder convergence. Conversely, incorporating an additional loss term for reconstructing on an additional target encoder that updates every K epochs would stabilize the reconstruction objective (the encoder of target MAE-K only changes every K epochs). Here, $\lambda$ is an additional hyper parameter and we simply set it to the value of 0.2. 
+
+The new pre-training loss(in red) , with the loss being logged five times per epoch is shown below. It is evident that the new loss function is smoother compared to the MAE-K pre-training curve, and it converges within 200 epochs of pre-training.  
+
+![new-mae-loss-curve](report_figures/new_mae/new_mae_loss_curve.png)
+
+The finetune and linear evaluations are shown below. 
+
+
 
 
 
@@ -110,9 +135,7 @@ This equation is applied to the target encoder for every epoch after the **warmu
 
 ## Conclusion
 
+In this study, we have successfully implemented MAE-K and EMA-MAE, two bootstrapped versions of MAE. By altering the reconstruction objective from pixels to the output of a target encoder, bootstrap-MAE demonstrates enhanced performance compared to the original MAE. Empirical evaluations conducted on the CIFAR10 dataset illustrate a significant performance boost over the MAE baseline.
 
-
-
-
-
+However, bootstrap-MAE faces the challenge of instability in the reconstruction objective, as different target networks may output varying features even when presented with the same image. To address this issue, we attempted to mitigate it by combining MAE-K and EMA-MAE, introducing both slow-bootstrap loss and fast-bootstrap loss. Empirical evaluations indicate that the enhanced version of bootstrap-MAE improves upon the original EMA-MAE, but the improvement is not significant, and adding an additional loss term also induces additional computational costs. For future work, exploring how to bootstrap on the target encoder while stabilizing training would be an interesting direction. 
 

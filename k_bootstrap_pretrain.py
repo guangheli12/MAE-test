@@ -36,7 +36,6 @@ import models_mae
 
 from engine_pretrain_bootstrap import train_one_epoch
 
-
 def get_args_parser():
     parser = argparse.ArgumentParser('MAE pre-training', add_help=False)
     parser.add_argument('--batch_size', default=512, type=int,
