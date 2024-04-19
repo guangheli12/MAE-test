@@ -11,6 +11,12 @@ bootstrap_linear_logs/
 bootstrap_linear_weights/
 bootstrap_finetune_weights/
 bootstrap_finetune_logs/ 
+new_pretrain_weights/
+new_pretrain_logs/
+new_finetune_logs/
+new_finetune_weights/
+new_linear_logs/
+new_linear_weights/
 # output_dir
 # finetune_logs/
 # finetuned_weights/
