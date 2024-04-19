@@ -43,7 +43,7 @@ def get_args_parser():
                         help='Batch size per GPU (effective batch size is batch_size * accum_iter * # gpus')
 
     # default is 200 epochs 
-    parser.add_argument('--slow_lambda', default = 1, type = int) 
+    parser.add_argument('--slow_lambda', default = 0.2, type = float) 
     parser.add_argument('--epochs', default=200, type=int)
     parser.add_argument('--accum_iter', default=1, type=int,
                         help='Accumulate gradient iterations (for increasing the effective batch size under memory constraints)')
@@ -258,11 +258,11 @@ if __name__ == '__main__':
     # 加上 warmup_epochs 和 tau 
     args.output_dir = os.path.join(
         args.output_dir, 
-        str(args.warmup_target_epochs) + '_' + str(args.tau)
+        str(args.num_k) + '_' + str(args.tau) 
     )
     args.log_dir = os.path.join(
         args.log_dir, 
-        str(args.warmup_target_epochs) + '_' + str(args.tau)
+        str(args.num_k) + '_' + str(args.tau) 
     )
     if args.output_dir:
         Path(args.output_dir).mkdir(parents=True, exist_ok=True)

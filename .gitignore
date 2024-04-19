@@ -23,3 +23,11 @@ no_pretrain_linear_logs/
 no_pretrain_linear_weights/
 baseline_linear_logs/
 bootstrap_pretrain_logs/
+
+
+k_pretrain_logs/
+new_finetune_logs/
+new_finetuned_weights/
+new_linear_logs/
+new_pretrain_logs/
+new_pretrain_weights/
